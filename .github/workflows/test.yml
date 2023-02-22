@@ -11,6 +11,21 @@ jobs:
       - name: Checkout alpha code
         uses: actions/checkout@v3
 
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        id: node-modules-cache
+        with:
+          path: |
+            node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+      - run: npm ci --ignore-scripts
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+    
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').dependencies['@playwright/test'].version)")" >> $GITHUB_ENV
+      
+
       - name: Cache playwright binaries
         uses: actions/cache@v3
         id: playwright-cache
