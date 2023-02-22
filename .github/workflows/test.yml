@@ -1,8 +1,7 @@
 name: Frontend e2e test
 
 on:
-  pull_request:
-    types: [opened, reopened, ready_for_review, synchronize]
+  push:
 
 jobs:
   has_file_changed:
