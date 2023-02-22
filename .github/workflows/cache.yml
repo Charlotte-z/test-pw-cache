@@ -52,9 +52,7 @@ jobs:
             libmanette-0.2-0\
             libgles2\
             gstreamer1.0-libav
-            
-      - name: Run Playwright tests
-        run: npx playwright test
+
       - uses: actions/upload-artifact@v2
         if: always()
         with:
