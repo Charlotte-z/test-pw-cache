@@ -42,7 +42,9 @@ jobs:
         run: |
           sudo apt update &&\
           sudo apt-get install libvpx7\
+            libnotify4\
             libevent-2.1-7\
+            libopengl0\
             libopus0\
             libwoff1\
             libharfbuzz-icu0\
