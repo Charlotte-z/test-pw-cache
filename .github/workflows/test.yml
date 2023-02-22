@@ -38,10 +38,21 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
       
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libnotify4 libopengl0 libvpx7 libgles2 libevent-2.1-7 gstreamer1.0-libav libopus0 libwoff1 libharfbuzz-icu0 libgstreamer-plugins-base1.0-0 libgstreamer-gl1.0-0 libhyphen0 libmanette-0.2-0 libgles2 gstreamer1.0-libav
-          version: 1.0
+       - name: Install Webkit Dependencies
+        run: |
+          sudo apt update &&\
+          sudo apt-get install libvpx7\
+            libevent-2.1-7\
+            libopus0\
+            libwoff1\
+            libharfbuzz-icu0\
+            libgstreamer-plugins-base1.0-0\
+            libgstreamer-gl1.0-0\
+            libhyphen0\
+            libmanette-0.2-0\
+            libgles2\
+            gstreamer1.0-libav
+
 
       - name: Start e2e testing
         run: npx playwright test ./e2e
