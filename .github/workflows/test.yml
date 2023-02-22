@@ -1,46 +1,30 @@
 name: Frontend e2e test
 
 on:
-  pull_request:
-    types: [opened, reopened, ready_for_review, synchronize]
+  push:
 
 jobs:
-  has_file_changed:
-    name: Has file changed
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download commit tags from artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: docker_pushed_tags_current_commit
-
-      - name: Download flags file from artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: ci_flag
-
-      - name: Is skip e2e test
-        run: |
-          cat flags.txt
-          run=$(grep -e "INTEGRATION_START=" docker_image_tags.txt | sed "s/INTEGRATION_START=//g")
-          frontend_changed=$(grep -e "E2E_START=" flags.txt | sed "s/E2E_START=//g")
-          echo docker_image_tags.txt
-          echo $run
-          if [ -n "$run" ] || [ -n "$frontend_changed" ];then echo "changed=true" >> $GITHUB_ENV; else echo "changed=false" >> $GITHUB_ENV; fi
-          echo ${{ env.changed }}
-    outputs:
-      file_changed: ${{ env.changed }}
-
   e2e_test:
-    runs-on: ubuntu-8cpu-16ram
-    needs: has_file_changed
-    if: needs.has_file_changed.outputs.file_changed == 'true'
-    defaults:
-      run:
-        working-directory: /home/runner/work/alpha/alpha
+    name: test
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout alpha code
         uses: actions/checkout@v3
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        id: node-modules-cache
+        with:
+          path: |
+            node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+      - run: npm ci --ignore-scripts
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+    
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').dependencies['@playwright/test'].version)")" >> $GITHUB_ENV
+      
 
       - name: Cache playwright binaries
         uses: actions/cache@v3
@@ -53,6 +37,24 @@ jobs:
       - name: Install Playwright's dependencies
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
+      
+      - name: Install Webkit Dependencies
+        run: |
+          sudo apt update &&\
+          sudo apt-get install libvpx7\
+            libnotify4\
+            libevent-2.1-7\
+            libopengl0\
+            libopus0\
+            libwoff1\
+            libharfbuzz-icu0\
+            libgstreamer-plugins-base1.0-0\
+            libgstreamer-gl1.0-0\
+            libhyphen0\
+            libmanette-0.2-0\
+            libgles2\
+            gstreamer1.0-libav
+
 
       - name: Start e2e testing
         run: npx playwright test ./e2e
